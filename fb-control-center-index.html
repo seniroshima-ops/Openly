@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1769e0" />
+  <title>FB Control Center</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg:#f4f7fb; --surface:#fff; --surface-2:#edf2f8; --text:#172033;
+      --muted:#6c788c; --border:#e1e7ef; --blue:#1877f2; --blue-dark:#115bc0;
+      --green:#16865b; --red:#c43d4b; --shadow:0 8px 28px rgba(28,48,79,.07);
+    }
+    [data-theme="dark"] {
+      color-scheme:dark; --bg:#0e1420; --surface:#171f2d; --surface-2:#202b3b;
+      --text:#edf3fc; --muted:#a1aec1; --border:#2b394d; --blue:#4c96ff;
+      --blue-dark:#2674df; --green:#4ac18d; --red:#ff7180; --shadow:0 8px 28px rgba(0,0,0,.2);
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    button,input { font:inherit; }
+    button { cursor:pointer; }
+    .app { min-height:100vh; }
+    .topbar { height:68px; background:var(--surface); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 24px; position:sticky; top:0; z-index:5; }
+    .brand { display:flex; align-items:center; gap:11px; font-weight:750; letter-spacing:-.3px; }
+    .brand-mark { width:36px; height:36px; display:grid; place-items:center; border-radius:11px; color:white; background:var(--blue); font-size:23px; font-weight:800; }
+    .top-actions { display:flex; gap:10px; align-items:center; }
+    .layout { display:grid; grid-template-columns:232px minmax(0,1fr); max-width:1500px; margin:auto; min-height:calc(100vh - 68px); }
+    aside { padding:22px 14px; border-right:1px solid var(--border); background:var(--surface); }
+    .nav-label { margin:4px 12px 10px; color:var(--muted); font-size:11px; font-weight:750; letter-spacing:1.1px; }
+    .nav { display:flex; flex-direction:column; gap:5px; }
+    .nav button { border:0; color:var(--muted); background:transparent; text-align:left; padding:11px 12px; border-radius:10px; display:flex; gap:12px; align-items:center; font-weight:600; }
+    .nav button:hover,.nav button.active { background:var(--surface-2); color:var(--blue); }
+    .nav-icon { width:20px; text-align:center; font-size:17px; }
+    main { padding:30px; min-width:0; }
+    .page-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:24px; }
+    h1 { margin:0; font-size:27px; letter-spacing:-.8px; }
+    h2 { margin:0; font-size:17px; letter-spacing:-.2px; }
+    p { margin:5px 0 0; color:var(--muted); }
+    .btn { border:1px solid var(--border); background:var(--surface); color:var(--text); border-radius:10px; padding:9px 13px; font-weight:650; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+    .btn:hover { border-color:var(--blue); }
+    .btn.primary { color:#fff; border-color:var(--blue); background:var(--blue); }
+    .btn.primary:hover { background:var(--blue-dark); }
+    .btn.danger { color:var(--red); }
+    .btn:disabled { opacity:.45; cursor:not-allowed; }
+    .grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:15px; margin-bottom:22px; }
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:15px; padding:18px; box-shadow:var(--shadow); }
+    .stat-top { display:flex; justify-content:space-between; color:var(--muted); font-size:13px; font-weight:650; }
+    .stat-icon { width:34px; height:34px; display:grid; place-items:center; border-radius:10px; background:var(--surface-2); color:var(--blue); font-size:17px; }
+    .stat-number { font-size:29px; line-height:1.2; font-weight:780; margin-top:13px; letter-spacing:-1px; }
+    .stat-note { color:var(--muted); font-size:12px; margin-top:4px; }
+    .content-grid { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(260px,.8fr); gap:16px; }
+    .section-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:15px; }
+    .account-list { display:flex; flex-direction:column; gap:10px; }
+    .account { display:flex; align-items:center; gap:12px; border:1px solid var(--border); padding:12px; border-radius:12px; }
+    .avatar { width:42px; height:42px; border-radius:50%; display:grid; place-items:center; background:var(--surface-2); color:var(--blue); font-weight:750; flex:none; }
+    .account-info { flex:1; min-width:0; }
+    .account-name { font-weight:700; overflow-wrap:anywhere; }
+    .account-sub { color:var(--muted); font-size:12px; }
+    .status { font-size:11px; font-weight:750; border-radius:99px; padding:4px 8px; background:var(--surface-2); color:var(--muted); white-space:nowrap; }
+    .status.local { color:var(--green); background:color-mix(in srgb,var(--green) 12%,var(--surface)); }
+    .empty { text-align:center; padding:28px 12px; color:var(--muted); }
+    .empty .empty-icon { font-size:28px; margin-bottom:8px; }
+    .quick-actions { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+    .quick-actions button { min-height:76px; flex-direction:column; }
+    .quick-actions span:first-child { font-size:20px; }
+    .notice { border:1px solid color-mix(in srgb,var(--blue) 30%,var(--border)); background:color-mix(in srgb,var(--blue) 7%,var(--surface)); border-radius:12px; padding:13px 14px; color:var(--muted); font-size:13px; margin-top:16px; }
+    .notice strong { color:var(--text); }
+    .view { display:none; }
+    .view.active { display:block; }
+    .toolbar { display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
+    .search { min-width:190px; flex:1; max-width:330px; padding:10px 12px; color:var(--text); border:1px solid var(--border); background:var(--surface); border-radius:10px; outline:none; }
+    .search:focus,input:focus { border-color:var(--blue); box-shadow:0 0 0 3px color-mix(in srgb,var(--blue) 15%,transparent); }
+    .table-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; min-width:520px; }
+    th,td { padding:13px 10px; text-align:left; border-bottom:1px solid var(--border); font-size:13px; }
+    th { color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.7px; }
+    .form-row { display:flex; gap:9px; margin-top:15px; }
+    .field { width:100%; min-width:0; padding:11px 12px; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--text); outline:none; }
+    .field-label { display:block; font-size:13px; font-weight:650; margin:13px 0 6px; }
+    .modal-backdrop { display:none; position:fixed; inset:0; z-index:20; background:rgba(5,12,24,.55); padding:18px; align-items:center; justify-content:center; }
+    .modal-backdrop.open { display:flex; }
+    .modal { width:min(100%,440px); background:var(--surface); border:1px solid var(--border); border-radius:17px; padding:22px; box-shadow:0 25px 80px rgba(0,0,0,.25); }
+    .modal-head { display:flex; justify-content:space-between; align-items:center; }
+    .modal-actions { display:flex; justify-content:flex-end; gap:9px; margin-top:20px; }
+    .log-item { padding:12px 0; border-bottom:1px solid var(--border); }
+    .log-item:last-child { border:0; }
+    .log-time { color:var(--muted); font-size:11px; }
+    .muted { color:var(--muted); }
+    .mobile-menu { display:none; }
+    .toast { position:fixed; bottom:20px; left:50%; transform:translate(-50%,20px); opacity:0; pointer-events:none; background:var(--text); color:var(--surface); padding:11px 16px; border-radius:10px; z-index:30; transition:.2s; box-shadow:var(--shadow); max-width:calc(100% - 30px); text-align:center; }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    @media(max-width:900px) { .grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .content-grid { grid-template-columns:1fr; } }
+    @media(max-width:650px) {
+      .topbar { padding:0 15px; height:60px; } .layout { display:block; min-height:calc(100vh - 60px); }
+      aside { display:none; position:fixed; z-index:10; top:60px; bottom:0; left:0; width:245px; box-shadow:var(--shadow); }
+      aside.open { display:block; } main { padding:22px 15px 35px; }
+      h1 { font-size:23px; } .page-head { align-items:center; }
+      .mobile-menu { display:inline-flex; } .brand { margin-right:auto; margin-left:10px; }
+      .grid { gap:10px; } .card { padding:14px; } .stat-number { font-size:25px; }
+      .form-row { flex-direction:column; } .hide-mobile { display:none; }
+    }
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="topbar">
+    <button class="btn mobile-menu" id="menuToggle" aria-label="Open navigation">☰</button>
+    <div class="brand"><div class="brand-mark">f</div><span>FB Control Center</span></div>
+    <div class="top-actions">
+      <span class="status">FRONTEND PREVIEW</span>
+      <button class="btn" id="themeToggle" aria-label="Toggle theme">☾ <span class="hide-mobile">Theme</span></button>
+    </div>
+  </header>
+  <div class="layout">
+    <aside id="sidebar">
+      <div class="nav-label">WORKSPACE</div>
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active" data-view="dashboard"><span class="nav-icon">▦</span>Dashboard</button>
+        <button data-view="accounts"><span class="nav-icon">♙</span>Accounts</button>
+        <button data-view="actions"><span class="nav-icon">⚡</span>Action Center</button>
+        <button data-view="console"><span class="nav-icon">⌘</span>Command Console</button>
+        <button data-view="activity"><span class="nav-icon">◷</span>Activity Logs</button>
+        <button data-view="settings"><span class="nav-icon">⚙</span>Settings</button>
+      </nav>
+      <div class="notice"><strong>Local preview</strong><br>Accounts added here are labels saved in this browser only. No Facebook login or actions are connected.</div>
+    </aside>
+    <main>
+      <section class="view active" id="view-dashboard">
+        <div class="page-head"><div><h1>Dashboard</h1><p>Overview of your account workspace.</p></div><button class="btn primary" data-open-add>＋ Add account</button></div>
+        <div class="grid">
+          <div class="card"><div class="stat-top"><span>Registered accounts</span><span class="stat-icon">♙</span></div><div class="stat-number" id="statTotal">0</div><div class="stat-note">Saved in this browser</div></div>
+          <div class="card"><div class="stat-top"><span>OAuth connected</span><span class="stat-icon">↗</span></div><div class="stat-number" id="statConnected">0</div><div class="stat-note">Live Meta connections</div></div>
+          <div class="card"><div class="stat-top"><span>Actions today</span><span class="stat-icon">⚡</span></div><div class="stat-number" id="statActions">0</div><div class="stat-note">Successful live actions</div></div>
+          <div class="card"><div class="stat-top"><span>Needs attention</span><span class="stat-icon">!</span></div><div class="stat-number" id="statAttention">0</div><div class="stat-note">Connection issues</div></div>
+        </div>
+        <div class="content-grid">
+          <div class="card"><div class="section-head"><h2>Accounts</h2><button class="btn" data-go="accounts">View all →</button></div><div class="account-list" id="dashboardAccounts"></div></div>
+          <div class="card"><div class="section-head"><h2>Quick actions</h2></div><div class="quick-actions">
+            <button class="btn" data-go="accounts"><span>♙</span><span>Manage accounts</span></button>
+            <button class="btn" data-go="actions"><span>⚡</span><span>Action center</span></button>
+            <button class="btn" data-go="console"><span>⌘</span><span>Command console</span></button>
+            <button class="btn" data-go="activity"><span>◷</span><span>View activity</span></button>
+          </div><div class="notice"><strong>Next milestone</strong><br>Configure a Meta developer app and backend before enabling OAuth.</div></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-accounts">
+        <div class="page-head"><div><h1>Accounts</h1><p>Keep a local list of accounts you intend to connect.</p></div><button class="btn primary" data-open-add>＋ Add account</button></div>
+        <div class="card">
+          <div class="section-head"><h2>Account registry</h2><input class="search" id="accountSearch" placeholder="Search accounts..." aria-label="Search accounts"></div>
+          <div id="accountTable"></div>
+          <div class="notice"><strong>Important:</strong> Adding an entry does not log in to Facebook. OAuth connection will be implemented in a later phase using Meta's supported permissions.</div>
+        </div>
+      </section>
+
+      <section class="view" id="view-actions">
+        <div class="page-head"><div><h1>Action Center</h1><p>Planned controls for operations permitted by Meta.</p></div></div>
+        <div class="grid">
+          <div class="card"><div class="stat-icon">▣</div><h2 style="margin-top:13px">Page publishing</h2><p>For eligible Pages and granted permissions.</p><button class="btn" disabled style="margin-top:15px">Not connected</button></div>
+          <div class="card"><div class="stat-icon">☷</div><h2 style="margin-top:13px">Page insights</h2><p>Read supported Page performance metrics.</p><button class="btn" disabled style="margin-top:15px">Not connected</button></div>
+          <div class="card"><div class="stat-icon">▤</div><h2 style="margin-top:13px">Page conversations</h2><p>Manage eligible Page messages and interactions.</p><button class="btn" disabled style="margin-top:15px">Not connected</button></div>
+          <div class="card"><div class="stat-icon">♙</div><h2 style="margin-top:13px">Personal account actions</h2><p>Unrestricted friend requests, follows, reactions and bulk actions are not provided by the standard Graph API.</p><button class="btn" disabled style="margin-top:15px">Unavailable via standard API</button></div>
+        </div>
+        <div class="notice"><strong>Permission-aware design:</strong> This app will only expose actions that Meta currently supports for the connected asset and approved permissions. It will not automate personal-account actions through cookies or browser bots.</div>
+      </section>
+
+      <section class="view" id="view-console">
+        <div class="page-head"><div><h1>Command Console</h1><p>Command interface preview. Execution is intentionally disabled.</p></div></div>
+        <div class="card">
+          <h2>Command input</h2>
+          <label class="field-label" for="commandInput">Example command</label>
+          <input class="field" id="commandInput" placeholder="e.g. help" autocomplete="off">
+          <div class="form-row"><button class="btn primary" id="runCommand">Run preview</button><button class="btn" id="clearConsole">Clear</button></div>
+          <pre id="consoleOutput" style="white-space:pre-wrap;background:var(--surface-2);padding:14px;border-radius:10px;color:var(--muted);min-height:110px;margin-top:16px">FB Control Center console ready.
+Type "help" to view available preview commands.</pre>
+          <div class="notice">This console accepts informational preview commands only. It cannot execute Facebook actions.</div>
+        </div>
+      </section>
+
+      <section class="view" id="view-activity">
+        <div class="page-head"><div><h1>Activity Logs</h1><p>Local record of changes made in this preview.</p></div><button class="btn" id="clearLogs">Clear logs</button></div>
+        <div class="card"><div id="activityList"></div></div>
+      </section>
+
+      <section class="view" id="view-settings">
+        <div class="page-head"><div><h1>Settings</h1><p>Manage this browser preview.</p></div></div>
+        <div class="card">
+          <h2>Appearance</h2><p>Choose a light or dark interface.</p>
+          <div class="form-row"><button class="btn" id="lightTheme">☀ Light mode</button><button class="btn" id="darkTheme">☾ Dark mode</button></div>
+          <hr style="border:0;border-top:1px solid var(--border);margin:22px 0">
+          <h2>Local data</h2><p>Account labels and activity logs are stored in this browser's local storage.</p>
+          <button class="btn danger" id="resetData" style="margin-top:15px">Reset local preview data</button>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="addModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <form class="modal" id="addForm">
+    <div class="modal-head"><h2 id="modalTitle">Add account label</h2><button type="button" class="btn" id="closeModal" aria-label="Close">✕</button></div>
+    <p>This creates a local account record only. Do not enter a password, cookie, or access token.</p>
+    <label class="field-label" for="accountLabel">Display name / label</label>
+    <input class="field" id="accountLabel" maxlength="60" placeholder="e.g. My test account" required>
+    <label class="field-label" for="accountNote">Optional note</label>
+    <input class="field" id="accountNote" maxlength="100" placeholder="e.g. Main Page admin">
+    <div class="modal-actions"><button type="button" class="btn" id="cancelAdd">Cancel</button><button class="btn primary" type="submit">Save account</button></div>
+  </form>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  const STORAGE_KEY = "fbcc-preview-v1";
+  const defaultState = { accounts: [], logs: [], theme: "light" };
+  let state = loadState();
+
+  function loadState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      return saved && Array.isArray(saved.accounts) && Array.isArray(saved.logs)
+        ? { ...defaultState, ...saved } : { ...defaultState };
+    } catch { return { ...defaultState }; }
+  }
+  function saveState() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function escapeHTML(value) {
+    return String(value).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
+  }
+  function log(message) {
+    state.logs.unshift({ message, time: new Date().toISOString() });
+    state.logs = state.logs.slice(0, 100);
+    saveState();
+  }
+  let toastTimer;
+  function toast(message) {
+    const el = document.getElementById("toast");
+    el.textContent = message; el.classList.add("show");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("show"), 2600);
+  }
+  function setTheme(theme) {
+    state.theme = theme;
+    document.documentElement.dataset.theme = theme;
+    saveState();
+    document.getElementById("themeToggle").innerHTML = theme === "dark" ? "☀ <span class='hide-mobile'>Theme</span>" : "☾ <span class='hide-mobile'>Theme</span>";
+  }
+  function navigate(view) {
+    document.querySelectorAll(".view").forEach(el => el.classList.toggle("active", el.id === "view-" + view));
+    document.querySelectorAll(".nav button").forEach(el => el.classList.toggle("active", el.dataset.view === view));
+    document.getElementById("sidebar").classList.remove("open");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function renderAccounts() {
+    const q = (document.getElementById("accountSearch")?.value || "").toLowerCase();
+    const filtered = state.accounts.filter(a => (a.name + " " + a.note).toLowerCase().includes(q));
+    const rowHTML = a => `<tr>
+      <td><div style="display:flex;align-items:center;gap:10px"><div class="avatar">${escapeHTML(a.name.slice(0,1).toUpperCase())}</div><div><strong>${escapeHTML(a.name)}</strong><div class="account-sub">${escapeHTML(a.note || "No note")}</div></div></div></td>
+      <td><span class="status">Not connected</span></td>
+      <td><button class="btn danger" data-remove="${a.id}">Remove</button></td>
+    </tr>`;
+    document.getElementById("accountTable").innerHTML = filtered.length
+      ? `<div class="table-wrap"><table><thead><tr><th>Account</th><th>Connection</th><th>Manage</th></tr></thead><tbody>${filtered.map(rowHTML).join("")}</tbody></table></div>`
+      : `<div class="empty"><div class="empty-icon">♙</div><strong>${q ? "No matching accounts" : "No accounts added yet"}</strong><div>Add an account label to start your local registry.</div></div>`;
+    document.getElementById("dashboardAccounts").innerHTML = state.accounts.length
+      ? state.accounts.slice(0,4).map(a => `<div class="account"><div class="avatar">${escapeHTML(a.name.slice(0,1).toUpperCase())}</div><div class="account-info"><div class="account-name">${escapeHTML(a.name)}</div><div class="account-sub">${escapeHTML(a.note || "Local record")}</div></div><span class="status">Not connected</span></div>`).join("")
+      : `<div class="empty"><div class="empty-icon">♙</div><strong>No accounts yet</strong><div>Your account labels will appear here.</div></div>`;
+    document.getElementById("statTotal").textContent = state.accounts.length;
+    document.getElementById("statConnected").textContent = "0";
+    document.getElementById("statActions").textContent = "0";
+    document.getElementById("statAttention").textContent = "0";
+  }
+  function renderLogs() {
+    document.getElementById("activityList").innerHTML = state.logs.length
+      ? state.logs.map(l => `<div class="log-item"><div>${escapeHTML(l.message)}</div><div class="log-time">${new Date(l.time).toLocaleString()}</div></div>`).join("")
+      : `<div class="empty"><div class="empty-icon">◷</div><strong>No activity recorded</strong><div>Changes in this preview will appear here.</div></div>`;
+  }
+  function refresh() { renderAccounts(); renderLogs(); }
+  function openModal() { document.getElementById("addModal").classList.add("open"); document.getElementById("accountLabel").focus(); }
+  function closeModal() { document.getElementById("addModal").classList.remove("open"); document.getElementById("addForm").reset(); }
+
+  document.querySelectorAll("[data-view]").forEach(b => b.addEventListener("click", () => navigate(b.dataset.view)));
+  document.querySelectorAll("[data-go]").forEach(b => b.addEventListener("click", () => navigate(b.dataset.go)));
+  document.querySelectorAll("[data-open-add]").forEach(b => b.addEventListener("click", openModal));
+  document.getElementById("menuToggle").addEventListener("click", () => document.getElementById("sidebar").classList.toggle("open"));
+  document.getElementById("themeToggle").addEventListener("click", () => setTheme(state.theme === "dark" ? "light" : "dark"));
+  document.getElementById("lightTheme").addEventListener("click", () => setTheme("light"));
+  document.getElementById("darkTheme").addEventListener("click", () => setTheme("dark"));
+  ["closeModal","cancelAdd"].forEach(id => document.getElementById(id).addEventListener("click", closeModal));
+  document.getElementById("addModal").addEventListener("click", e => { if (e.target.id === "addModal") closeModal(); });
+  document.getElementById("addForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const name = document.getElementById("accountLabel").value.trim();
+    const note = document.getElementById("accountNote").value.trim();
+    if (!name) return;
+    const account = { id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())), name, note, createdAt: new Date().toISOString() };
+    state.accounts.unshift(account); log(`Added local account record: ${name}`); saveState(); refresh(); closeModal(); toast("Account label saved.");
+  });
+  document.getElementById("accountTable").addEventListener("click", e => {
+    const button = e.target.closest("[data-remove]");
+    if (!button) return;
+    const account = state.accounts.find(a => a.id === button.dataset.remove);
+    if (!account || !confirm(`Remove the local record "${account.name}"?`)) return;
+    state.accounts = state.accounts.filter(a => a.id !== account.id);
+    log(`Removed local account record: ${account.name}`); saveState(); refresh(); toast("Account record removed.");
+  });
+  document.getElementById("accountSearch").addEventListener("input", renderAccounts);
+  document.getElementById("runCommand").addEventListener("click", () => {
+    const cmd = document.getElementById("commandInput").value.trim().toLowerCase();
+    const output = document.getElementById("consoleOutput");
+    const commands = {
+      help: "Available preview commands:\\nhelp — show this help\\nstatus — show local registry totals\\naccounts — list local account labels\\nclear — clear this output",
+      status: `Local account records: ${state.accounts.length}\\nOAuth connections: 0\\nLive Facebook actions: disabled`,
+      accounts: state.accounts.length ? state.accounts.map((a,i) => `${i+1}. ${a.name}`).join("\\n") : "No local account records."
+    };
+    if (cmd === "clear") output.textContent = "";
+    else output.textContent = commands[cmd] || `Unknown preview command: ${cmd || "(empty)"}\\nType "help" for available commands.`;
+  });
+  document.getElementById("clearConsole").addEventListener("click", () => document.getElementById("consoleOutput").textContent = "Console cleared.");
+  document.getElementById("clearLogs").addEventListener("click", () => {
+    if (!confirm("Clear all local activity logs?")) return;
+    state.logs = []; saveState(); renderLogs(); toast("Activity logs cleared.");
+  });
+  document.getElementById("resetData").addEventListener("click", () => {
+    if (!confirm("Delete all local account labels and activity logs from this browser?")) return;
+    state = { ...defaultState }; saveState(); setTheme("light"); refresh(); toast("Local preview data reset.");
+  });
+
+  setTheme(state.theme || "light");
+  refresh();
+})();
+</script>
+</body>
+</html>
